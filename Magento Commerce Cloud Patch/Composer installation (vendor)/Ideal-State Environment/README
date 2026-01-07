@@ -1,0 +1,41 @@
+How to apply Magento Enterprise Cloud (ECE) patch for Pearl Theme (Composer Installation)
+
+ 
+
+Step 1:
+Before you commit any files to Github please copy the content of the ECE patch directory into the root of your EE Magento installation.
+
+Step 2:
+After patch files are copied, trigger the pearl_cloud_setups.sh script using this command: ./pearl_cloud_setups.sh
+Important: This shell script needs to be executed before you add theme files to your ECE environment.
+
+Step 3:
+Pearl Theme code is now ready to be committed to Github and deployed on your ECE environment. Commit the code to your ECE repository.
+
+Done!
+
+  
+
+
+Details about how this patch works:
+
+In ECE environments a write limitation is encountered when generating theme LESS files based on theme admin options, as ECE environments are read-only we cannot generate dynamic LESS files inside the theme modules. Because of this reason in this patch we changed default location of LESS files from 'vendor/weltpixel' (read-only) to 'pub/media/css_weltpixel' (read / write).
+
+When the pearl_cloud_setups.sh shell script is executed, it removes the css directories under non writable location 'vendor/weltpixel/...' and creates symlinks to 'pub/media/css_weltpixel/MODULE_NAME/css directories' (as these are writable on the cloud as well.)
+
+ECE patch also contains the initial module less files for 5 modules where we generate less on the fly. (CategoryPage, CustomHeader, FrontendOptions, ProductPage, CustomFooter).
+
+Once patch is applied, you should not encounter any LESS file generation restrictions when saving Pearl Theme options in your ECE environment. 
+
+ 
+
+
+
+Common questions:
+
+Q: Can I apply the patch after I committed Pearl Theme code to Github?
+
+A: Yes, apply the patch and recommit the code again. 
+
+
+
