@@ -33,8 +33,8 @@ do
     then
         rm -rf  css;
     fi
-    ln -s ../../../../../../../pub/media/css_weltpixel/$MODULENAME/css/ css;
-    cd ../../../../../../../;
+    ln -s ../../../../../../pub/media/css_weltpixel/$MODULENAME/css/ css;
+    cd ../../../../../../;
     echo "Symlink was successfully applied for $MODULENAME module ($PACKAGENAME).";
 done
 
