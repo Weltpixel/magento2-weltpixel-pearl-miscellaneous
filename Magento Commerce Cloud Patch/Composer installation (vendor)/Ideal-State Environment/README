@@ -1,41 +1,52 @@
-How to apply Magento Enterprise Cloud (ECE) patch for Pearl Theme (Composer Installation)
-
- 
+How to apply the Adobe Commerce Cloud (ECE) patch for the Pearl Theme in an Ideal State environment
+(static content deployed in the build phase)
 
 Step 1:
-Before you commit any files to Github please copy the content of the ECE patch directory into the root of your EE Magento installation.
+Copy the content of this folder into the root of your Magento installation, merging the pub folder with yours.
 
 Step 2:
-After patch files are copied, trigger the pearl_cloud_setups.sh script using this command: ./pearl_cloud_setups.sh
-Important: This shell script needs to be executed before you add theme files to your ECE environment.
+If your stores use other Pearl based themes or other locales, open pearl_cloud_setups.sh and add them to the PearlThemes list, for example "Pearl/weltpixel_custom/de_DE". Do not use commas between the entries.
 
 Step 3:
-Pearl Theme code is now ready to be committed to Github and deployed on your ECE environment. Commit the code to your ECE repository.
+Add the script to the build hook of .magento.app.yaml, after the generate and transfer commands:
+
+    build: |
+        php ./vendor/bin/ece-tools build:generate
+        php ./vendor/bin/ece-tools build:transfer
+        chmod +x pearl_cloud_setups.sh
+        ./pearl_cloud_setups.sh
+
+Step 4:
+Generate the Pearl LESS and CSS in the post_deploy hook, with one css:generate line for each store view that uses Pearl:
+
+    post_deploy: |
+        php ./vendor/bin/ece-tools post-deploy
+        php ./bin/magento weltpixel:less:generate
+        php ./bin/magento weltpixel:css:generate --store=default
+
+Step 5:
+Commit and push the changes.
 
 Done!
-
-  
 
 
 Details about how this patch works:
 
-In ECE environments a write limitation is encountered when generating theme LESS files based on theme admin options, as ECE environments are read-only we cannot generate dynamic LESS files inside the theme modules. Because of this reason in this patch we changed default location of LESS files from 'vendor/weltpixel' (read-only) to 'pub/media/css_weltpixel' (read / write).
+In ECE environments vendor and the deployed static content are read-only once the application is deployed, so the LESS and CSS that Pearl generates from the theme options cannot be written there. The script replaces the folders Pearl writes to with symlinks into pub/media/css_weltpixel, which is a writable mount:
+- the css folder of the modules that generate LESS (CategoryPage, CustomHeader, FrontendOptions, ProductPage, CustomFooter)
+- the css folder of each theme and locale in PearlThemes, and the css folder of those modules in it
 
-When the pearl_cloud_setups.sh shell script is executed, it removes the css directories under non writable location 'vendor/weltpixel/...' and creates symlinks to 'pub/media/css_weltpixel/MODULE_NAME/css directories' (as these are writable on the cloud as well.)
+The files of those folders are placed in init/pub/media/css_weltpixel. build:transfer has already copied pub/media to init/pub/media at that point, and on every deploy ece-tools copies init/pub/media into the pub/media mount, so the files are where the symlinks point. Do not write files to pub/media in the build hook after build:transfer: the mount hides them.
 
-ECE patch also contains the initial module less files for 5 modules where we generate less on the fly. (CategoryPage, CustomHeader, FrontendOptions, ProductPage, CustomFooter).
+The script works with and without a pub/static mount: with one it changes the static content that build:transfer moved to init/pub/static, without one the static content in pub/static.
 
-Once patch is applied, you should not encounter any LESS file generation restrictions when saving Pearl Theme options in your ECE environment. 
-
- 
-
+The script stops with an error when a required folder is missing, and prints a warning for a module, theme or locale it cannot find.
 
 
 Common questions:
 
-Q: Can I apply the patch after I committed Pearl Theme code to Github?
+Q: Do I need to run a script locally or commit files to pub/media?
+A: No. The script runs in the build hook and creates everything it needs.
 
-A: Yes, apply the patch and recommit the code again. 
-
-
-
+Q: The site shows the default Pearl styles right after a deploy.
+A: Each deploy restores the CSS deployed in the build phase until the post_deploy hook regenerates it. Make sure the post_deploy commands from Step 4 are there for every store view.
