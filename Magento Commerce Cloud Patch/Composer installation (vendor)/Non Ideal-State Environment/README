@@ -23,7 +23,7 @@ After the first deploy, check on the server (for example after magento-cloud ssh
 
     ls -ld vendor/weltpixel/m2-weltpixel-{category-page,custom-header,custom-footer,frontend-options,product-page}/view/frontend/web/css
 
-Each line should end with "-> .../pub/media/css_weltpixel/<module>/css". If one of them is a normal folder, look for the "Pearl Cloud patch" lines in the build log.
+Each line should end with "-> .../pub/media/css_weltpixel/<module>/css". If one of these is a normal folder, check that the script line is in the build hook, and look in the build log for "Pearl Cloud patch" errors or warnings.
 
 Done!
 
