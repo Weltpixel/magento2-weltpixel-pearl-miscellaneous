@@ -27,6 +27,13 @@ Generate the Pearl LESS and CSS in the post_deploy hook, with one css:generate l
 Step 5:
 Commit and push the changes.
 
+Step 6:
+After the first deploy, check on the server (for example after magento-cloud ssh) that each of the five module css folders is a symlink into pub/media/css_weltpixel:
+
+    ls -ld vendor/weltpixel/m2-weltpixel-{category-page,custom-header,custom-footer,frontend-options,product-page}/view/frontend/web/css
+
+Each line should end with "-> .../pub/media/css_weltpixel/<module>/css". The css folder of each theme and locale in PearlThemes, under pub/static/frontend, is a symlink into pub/media/css_weltpixel as well. If one of them is a normal folder, look for the "Pearl Cloud patch" lines in the build log.
+
 Done!
 
 
