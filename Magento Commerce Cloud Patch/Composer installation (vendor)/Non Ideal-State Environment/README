@@ -1,0 +1,41 @@
+How to apply the Adobe Commerce Cloud (ECE) patch for the Pearl Theme in a Non Ideal State environment
+(static content deployed in the deploy phase)
+
+Step 1:
+Copy the content of this folder into the root of your Magento installation, merging the pub folder with yours. The pub/media/css_weltpixel folder holds the starting LESS files of the five modules that generate LESS.
+
+Step 2:
+Add the script to the build hook of .magento.app.yaml, after the generate and transfer commands:
+
+    build: |
+        php ./vendor/bin/ece-tools build:generate
+        php ./vendor/bin/ece-tools build:transfer
+        chmod +x pearl_cloud_setups.sh
+        ./pearl_cloud_setups.sh
+
+The script has to run on the server: vendor is installed on the server from composer.lock and is not part of your repository, so a script run locally cannot change it.
+
+Step 3:
+Commit and push the changes.
+
+Step 4:
+After the first deploy, check on the server (for example after magento-cloud ssh) that each of the five module css folders is a symlink into pub/media/css_weltpixel:
+
+    ls -ld vendor/weltpixel/m2-weltpixel-{category-page,custom-header,custom-footer,frontend-options,product-page}/view/frontend/web/css
+
+Each line should end with "-> .../pub/media/css_weltpixel/<module>/css". If one of these is a normal folder, check that the script line is in the build hook, and look in the build log for "Pearl Cloud patch" errors or warnings.
+
+Done!
+
+
+Details about how this patch works:
+
+In ECE environments vendor is read-only once the application is deployed, so the LESS that Pearl generates from the theme options cannot be written into the module folders. The script replaces the css folder of the modules that generate LESS (CategoryPage, CustomHeader, FrontendOptions, ProductPage, CustomFooter) with a symlink into pub/media/css_weltpixel, which is a writable mount. Saving the Pearl theme options in the admin then writes the LESS there, and it is kept across deploys.
+
+The script only creates the symlinks; it writes nothing into pub/media, so the files there come from the pub folder of this patch. It stops with an error when it is not run from the project root, and prints a warning for a module it cannot find or a missing pub/media/css_weltpixel folder.
+
+
+Common questions:
+
+Q: Do I need to run the script locally?
+A: No. It runs in the build hook on the server.
